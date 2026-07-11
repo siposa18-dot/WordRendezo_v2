@@ -22,13 +22,11 @@ class Controller:
             )
         )
 
-    def process_document(self, input_file: str):
-
-        output = self.output_filename(input_file)
+    def process_document(self, input_file: str, output_file: str):
 
         self.engine.process(
             input_file,
-            output
+            output_file
         )
 
         return output

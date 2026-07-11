@@ -57,7 +57,22 @@ class MainWindow(ctk.CTk):
             command=self.select_file
         )
         browse_button.pack(pady=(0, 20))
+            # ===== Kimeneti fájl =====
 
+        ctk.CTkLabel(
+            self,
+            text="Kimeneti fájl"
+        ).pack(anchor="w", padx=20)
+
+        self.output_entry = ctk.CTkEntry(
+            self,
+            width=650
+        )
+
+        self.output_entry.pack(
+            padx=20,
+            pady=(5, 20)
+        )
         # ===== Rendezés =====
 
         self.button = ctk.CTkButton(
@@ -83,6 +98,10 @@ class MainWindow(ctk.CTk):
             self.input_entry.delete(0, "end")
             self.input_entry.insert(0, filename)
 
+            output = self.controller.output_filename(filename)
+
+            self.output_entry.delete(0, "end")
+            self.output_entry.insert(0, output)
     # ==================================================
 
     def start_process(self):
@@ -92,7 +111,9 @@ class MainWindow(ctk.CTk):
         if not filename:
             return
 
-        output = self.controller.process_document(filename)
+        output = self.output_entry.get()
+
+        self.controller.process_document(filename,output)
 
         print()
         print("=" * 40)
