@@ -1,12 +1,5 @@
-from gui import MainWindow
-
-
-def main():
-
-    app = MainWindow()
-
-    app.mainloop()
-
+from gui.main_window import MainWindow
 
 if __name__ == "__main__":
-    main()
+    app = MainWindow()
+    app.mainloop()
