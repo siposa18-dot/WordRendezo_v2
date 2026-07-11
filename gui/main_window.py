@@ -1,3 +1,5 @@
+from email.mime import text
+
 import customtkinter as ctk
 from tkinter import filedialog
 
@@ -84,6 +86,27 @@ class MainWindow(ctk.CTk):
             padx=20,
             pady=(0, 20)
         )
+        # ===== Napló =====
+
+        ctk.CTkLabel(
+            self,
+            text="Napló"
+        ).pack(anchor="w", padx=20)
+
+        self.log_box = ctk.CTkTextbox(
+            self,
+            width=800,
+            height=180
+        )
+        
+        self.log_box.pack(
+            padx=20,
+            pady=(5, 20),
+            fill="both",
+            expand=True
+        )
+
+        self.log_box.configure(state="disabled")
 
         # ===== Rendezés gomb =====
 
@@ -98,8 +121,18 @@ class MainWindow(ctk.CTk):
 
     # ==================================================
 
-    def update_status(self, text):
+    def log(self, text):
+
         self.status_label.configure(text=text)
+
+        self.log_box.configure(state="normal")
+
+        self.log_box.insert("end", text + "\n")
+
+        self.log_box.see("end")
+
+        self.log_box.configure(state="disabled")
+
         self.update_idletasks()
 
     # ==================================================
@@ -138,7 +171,7 @@ class MainWindow(ctk.CTk):
             self.update_status("Nincs kiválasztott fájl.")
             return
 
-        self.update_status("Rendezés folyamatban...")
+        self.log("Rendezés elindult...")
 
         try:
             self.controller.process_document(filename, output)
