@@ -33,7 +33,7 @@ class MainWindow(ctk.CTk):
         )
         version.pack(pady=(0, 20))
 
-        # ===== Dokumentum =====
+        # ===== Bemeneti fájl =====
 
         ctk.CTkLabel(
             self,
@@ -42,14 +42,12 @@ class MainWindow(ctk.CTk):
 
         self.input_entry = ctk.CTkEntry(
             self,
-            width=650
+            width=700
         )
         self.input_entry.pack(
             padx=20,
             pady=(5, 10)
         )
-
-        # ===== Tallózás =====
 
         browse_button = ctk.CTkButton(
             self,
@@ -57,7 +55,8 @@ class MainWindow(ctk.CTk):
             command=self.select_file
         )
         browse_button.pack(pady=(0, 20))
-            # ===== Kimeneti fájl =====
+
+        # ===== Kimeneti fájl =====
 
         ctk.CTkLabel(
             self,
@@ -66,21 +65,42 @@ class MainWindow(ctk.CTk):
 
         self.output_entry = ctk.CTkEntry(
             self,
-            width=650
+            width=700
         )
-
         self.output_entry.pack(
             padx=20,
             pady=(5, 20)
         )
-        # ===== Rendezés =====
+
+        # ===== Állapot =====
+
+        self.status_label = ctk.CTkLabel(
+            self,
+            text="Készen áll",
+            anchor="w"
+        )
+        self.status_label.pack(
+            fill="x",
+            padx=20,
+            pady=(0, 20)
+        )
+
+        # ===== Rendezés gomb =====
 
         self.button = ctk.CTkButton(
             self,
             text="🚀 RENDEZÉS",
-            command=self.start_process
+            command=self.start_process,
+            height=40
         )
-        self.button.pack(pady=20)
+
+        self.button.pack(pady=10)
+
+    # ==================================================
+
+    def update_status(self, text):
+        self.status_label.configure(text=text)
+        self.update_idletasks()
 
     # ==================================================
 
@@ -94,28 +114,45 @@ class MainWindow(ctk.CTk):
             ]
         )
 
-        if filename:
-            self.input_entry.delete(0, "end")
-            self.input_entry.insert(0, filename)
+        if not filename:
+            return
 
-            output = self.controller.output_filename(filename)
+        self.input_entry.delete(0, "end")
+        self.input_entry.insert(0, filename)
 
-            self.output_entry.delete(0, "end")
-            self.output_entry.insert(0, output)
+        output = self.controller.output_filename(filename)
+
+        self.output_entry.delete(0, "end")
+        self.output_entry.insert(0, output)
+
     # ==================================================
 
     def start_process(self):
 
+        print(">>> start_process meghívva <<<")
+
         filename = self.input_entry.get()
-
-        if not filename:
-            return
-
         output = self.output_entry.get()
 
-        self.controller.process_document(filename,output)
+        if not filename:
+            self.update_status("Nincs kiválasztott fájl.")
+            return
 
-        print()
-        print("=" * 40)
-        print("KÉSZ!")
-        print(output)
+        self.update_status("Rendezés folyamatban...")
+
+        try:
+            self.controller.process_document(filename, output)
+
+            self.update_status("✅ Kész!")
+
+            print("=" * 40)
+            print("KÉSZ!")
+            print(output)
+
+        except Exception as e:
+
+            import traceback
+
+            self.update_status("❌ Hiba történt!")
+
+            traceback.print_exc()

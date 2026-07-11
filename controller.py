@@ -29,4 +29,4 @@ class Controller:
             output_file
         )
 
-        return output
+        return output_file
