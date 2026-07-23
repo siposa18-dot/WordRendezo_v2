@@ -9,6 +9,8 @@ class Controller:
 
         self.engine = WordEngine()
 
+    # -------------------------------------------------
+
     def output_filename(self, input_file: str) -> str:
         """
         Meghatározza a kimeneti fájl nevét.
@@ -22,11 +24,21 @@ class Controller:
             )
         )
 
-    def process_document(self, input_file: str, output_file: str):
+    # -------------------------------------------------
+
+    def process_document(
+        self,
+        input_file: str,
+        output_file: str,
+        logger=None,
+        progress=None,
+    ):
 
         self.engine.process(
             input_file,
-            output_file
+            output_file,
+            logger=logger,
+            progress=progress,
         )
 
         return output_file

@@ -22,28 +22,43 @@ class WordEngine:
 
     # -------------------------------------------------
 
-    def process(self, input_file, output_file, progress=None):
+    def process(
+        self,
+        input_file,
+        output_file,
+        logger=None,
+        progress=None,
+    ):
 
         self.open_word()
 
         try:
 
-            self.log(progress, "Forrás megnyitása...")
+            self.log(logger, "Forrás megnyitása...")
             self.open_document(input_file)
 
-            self.log(progress, "Blokkok beolvasása...")
+            self.log(logger, "Blokkok beolvasása...")
             blocks = self.read_blocks()
 
-            self.log(progress, "Rendezés...")
+            self.log(logger, f"{len(blocks)} blokk beolvasva.")
+
+            self.log(logger, "Rendezés...")
             self.sort_blocks(blocks)
 
-            self.log(progress, "Új dokumentum...")
+            self.log(logger, "Új dokumentum létrehozása...")
             self.create_document()
 
-            self.copy_blocks(blocks, progress)
+            self.copy_blocks(
+                blocks,
+                logger,
+                progress,
+            )
 
-            self.log(progress, "Mentés...")
+            self.log(logger, "Mentés...")
             self.save_document(output_file)
+
+            if progress:
+                progress(100)
 
         finally:
 
@@ -101,14 +116,19 @@ class WordEngine:
 
     # -------------------------------------------------
 
-    def copy_blocks(self, blocks, progress=None):
+    def copy_blocks(
+        self,
+        blocks,
+        logger=None,
+        progress=None,
+    ):
 
         total = len(blocks)
 
         for i, block in enumerate(blocks, start=1):
 
             self.log(
-                progress,
+                logger,
                 f"{i}/{total}  {block.year} {block.kind}"
             )
 
@@ -123,6 +143,9 @@ class WordEngine:
             )
 
             insert.FormattedText = src_range.FormattedText
+
+            if progress:
+                progress(int(i / total * 100))
 
     # -------------------------------------------------
 

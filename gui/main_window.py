@@ -1,10 +1,7 @@
-from email.mime import text
-
 import customtkinter as ctk
 from tkinter import filedialog
 
 from controller import Controller
-
 
 class MainWindow(ctk.CTk):
 
@@ -86,6 +83,19 @@ class MainWindow(ctk.CTk):
             padx=20,
             pady=(0, 20)
         )
+
+        # ===== Progress =====
+
+        self.progress = ctk.CTkProgressBar(self)
+
+        self.progress.pack(
+            fill="x",
+            padx=20,
+            pady=(5, 10)
+        )
+
+        self.progress.set(0)
+
         # ===== Napló =====
 
         ctk.CTkLabel(
@@ -95,15 +105,14 @@ class MainWindow(ctk.CTk):
 
         self.log_box = ctk.CTkTextbox(
             self,
-            width=800,
             height=180
         )
-        
+
         self.log_box.pack(
-            padx=20,
-            pady=(5, 20),
             fill="both",
-            expand=True
+            expand=True,
+            padx=20,
+            pady=(5, 20)
         )
 
         self.log_box.configure(state="disabled")
@@ -126,12 +135,14 @@ class MainWindow(ctk.CTk):
         self.status_label.configure(text=text)
 
         self.log_box.configure(state="normal")
-
         self.log_box.insert("end", text + "\n")
-
         self.log_box.see("end")
-
         self.log_box.configure(state="disabled")
+
+        self.update_idletasks()
+    def update_progress(self, value):
+
+        self.progress.set(value / 100)
 
         self.update_idletasks()
 
@@ -162,30 +173,41 @@ class MainWindow(ctk.CTk):
 
     def start_process(self):
 
-        print(">>> start_process meghívva <<<")
+        self.update_progress(0)
+        self.log_box.configure(state="normal")
+        self.log_box.delete("1.0", "end")
+        self.log_box.configure(state="disabled")
 
         filename = self.input_entry.get()
         output = self.output_entry.get()
 
         if not filename:
-            self.update_status("Nincs kiválasztott fájl.")
+            self.log("Nincs kiválasztott fájl.")
             return
 
         self.log("Rendezés elindult...")
 
         try:
-            self.controller.process_document(filename, output)
 
-            self.update_status("✅ Kész!")
+            self.controller.process_document(
+                filename,
+                output,
+                logger=self.log,
+                progress=self.update_progress
+            )
+
+            self.log("✅ Kész!")
 
             print("=" * 40)
             print("KÉSZ!")
             print(output)
 
-        except Exception as e:
+            
+
+        except Exception:
 
             import traceback
 
-            self.update_status("❌ Hiba történt!")
+            self.log("❌ Hiba történt!")
 
             traceback.print_exc()

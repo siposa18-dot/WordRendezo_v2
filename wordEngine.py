@@ -22,13 +22,19 @@ class WordEngine:
 
     # -------------------------------------------------
 
-    def process(self, input_file, output_file, progress=None):
+    def process(
+        self,
+        input_file,
+        output_file,
+        logger=None,
+        progress=None
+    ):
 
         self.open_word()
 
         try:
 
-            self.log(progress, "Forrás megnyitása...")
+            self.log(logger, "Forrás megnyitása...")
             self.open_document(input_file)
 
             self.log(progress, "Blokkok beolvasása...")
@@ -40,7 +46,7 @@ class WordEngine:
             self.log(progress, "Új dokumentum...")
             self.create_document()
 
-            self.copy_blocks(blocks, progress)
+            self.copy_blocks(blocks, logger, progress)
 
             self.log(progress, "Mentés...")
             self.save_document(output_file)
@@ -101,16 +107,23 @@ class WordEngine:
 
     # -------------------------------------------------
 
-    def copy_blocks(self, blocks, progress=None):
+    def copy_blocks(
+        self,
+        blocks,
+        logger=None,
+        progress=None
+    ):
 
         total = len(blocks)
 
         for i, block in enumerate(blocks, start=1):
 
             self.log(
-                progress,
+                logger,
                 f"{i}/{total}  {block.year} {block.kind}"
             )
+            if progress:
+                progress(int(i / total * 100))
 
             src_range = self.src.Range(
                 Start=block.start_char,
