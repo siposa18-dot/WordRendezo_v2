@@ -1,20 +1,16 @@
 from pathlib import Path
+from multiprocessing import Process, Queue
 
-from word_engine import WordEngine
-
+from gui.worker import run_worker
 
 class Controller:
 
     def __init__(self):
-
-        self.engine = WordEngine()
+        pass
 
     # -------------------------------------------------
 
     def output_filename(self, input_file: str) -> str:
-        """
-        Meghatározza a kimeneti fájl nevét.
-        """
 
         path = Path(input_file)
 
@@ -26,19 +22,23 @@ class Controller:
 
     # -------------------------------------------------
 
-    def process_document(
+    def start_process(
         self,
-        input_file: str,
-        output_file: str,
-        logger=None,
-        progress=None,
+        input_file,
+        output_file,
     ):
 
-        self.engine.process(
-            input_file,
-            output_file,
-            logger=logger,
-            progress=progress,
+        queue = Queue()
+
+        process = Process(
+            target=run_worker,
+            args=(
+                input_file,
+                output_file,
+                queue,
+            ),
         )
 
-        return output_file
+        process.start()
+
+        return process, queue

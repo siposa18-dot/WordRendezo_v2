@@ -1,14 +1,21 @@
 import customtkinter as ctk
-from tkinter import filedialog
 
+from tkinter import filedialog
+from queue import Empty
 from controller import Controller
 
+
 class MainWindow(ctk.CTk):
+
+    POLL_INTERVAL = 100
 
     def __init__(self):
         super().__init__()
 
         self.controller = Controller()
+
+        self.process = None
+        self.queue = None
 
         self.title("📘 Word Feladatrendező")
         self.geometry("900x650")
@@ -16,7 +23,9 @@ class MainWindow(ctk.CTk):
         ctk.set_appearance_mode("System")
         ctk.set_default_color_theme("blue")
 
-        # ===== Cím =====
+        # ===========================
+        # Cím
+        # ===========================
 
         title = ctk.CTkLabel(
             self,
@@ -27,12 +36,14 @@ class MainWindow(ctk.CTk):
 
         version = ctk.CTkLabel(
             self,
-            text="v2.0.0-alpha",
+            text="v2.1.0",
             font=("Segoe UI", 12)
         )
         version.pack(pady=(0, 20))
 
-        # ===== Bemeneti fájl =====
+        # ===========================
+        # Input
+        # ===========================
 
         ctk.CTkLabel(
             self,
@@ -53,9 +64,14 @@ class MainWindow(ctk.CTk):
             text="📂 Tallózás...",
             command=self.select_file
         )
-        browse_button.pack(pady=(0, 20))
 
-        # ===== Kimeneti fájl =====
+        browse_button.pack(
+            pady=(0, 20)
+        )
+
+        # ===========================
+        # Output
+        # ===========================
 
         ctk.CTkLabel(
             self,
@@ -66,25 +82,31 @@ class MainWindow(ctk.CTk):
             self,
             width=700
         )
+
         self.output_entry.pack(
             padx=20,
             pady=(5, 20)
         )
 
-        # ===== Állapot =====
+        # ===========================
+        # Állapot
+        # ===========================
 
         self.status_label = ctk.CTkLabel(
             self,
             text="Készen áll",
             anchor="w"
         )
+
         self.status_label.pack(
             fill="x",
             padx=20,
             pady=(0, 20)
         )
 
-        # ===== Progress =====
+        # ===========================
+        # Progress
+        # ===========================
 
         self.progress = ctk.CTkProgressBar(self)
 
@@ -96,7 +118,9 @@ class MainWindow(ctk.CTk):
 
         self.progress.set(0)
 
-        # ===== Napló =====
+        # ===========================
+        # Napló
+        # ===========================
 
         ctk.CTkLabel(
             self,
@@ -117,7 +141,9 @@ class MainWindow(ctk.CTk):
 
         self.log_box.configure(state="disabled")
 
-        # ===== Rendezés gomb =====
+        # ===========================
+        # Gomb
+        # ===========================
 
         self.button = ctk.CTkButton(
             self,
@@ -128,86 +154,208 @@ class MainWindow(ctk.CTk):
 
         self.button.pack(pady=10)
 
-    # ==================================================
+        self.protocol(
+            "WM_DELETE_WINDOW",
+            self.on_close,
+        )
+
+    # ==========================================================
+    # Napló
+    # ==========================================================
 
     def log(self, text):
 
-        self.status_label.configure(text=text)
+        self._log(text)
 
-        self.log_box.configure(state="normal")
-        self.log_box.insert("end", text + "\n")
+    def _log(self, text):
+
+        self.status_label.configure(
+            text=text
+        )
+
+        self.log_box.configure(
+            state="normal"
+        )
+
+        self.log_box.insert(
+            "end",
+            text + "\n"
+        )
+
         self.log_box.see("end")
-        self.log_box.configure(state="disabled")
 
-        self.update_idletasks()
+        self.log_box.configure(
+            state="disabled"
+        )
+
+    # ==========================================================
+    # Progress
+    # ==========================================================
+
     def update_progress(self, value):
 
-        self.progress.set(value / 100)
+        self.progress.set(
+            value / 100
+        )
 
-        self.update_idletasks()
-
-    # ==================================================
+    # ==========================================================
+    # Fájlválasztás
+    # ==========================================================
 
     def select_file(self):
 
         filename = filedialog.askopenfilename(
             title="Word dokumentum kiválasztása",
             filetypes=[
-                ("Word dokumentum", "*.docx"),
-                ("Minden fájl", "*.*")
-            ]
+                (
+                    "Word dokumentum",
+                    "*.docx",
+                ),
+                (
+                    "Minden fájl",
+                    "*.*",
+                ),
+            ],
         )
 
         if not filename:
             return
 
-        self.input_entry.delete(0, "end")
-        self.input_entry.insert(0, filename)
+        self.input_entry.delete(
+            0,
+            "end",
+        )
 
-        output = self.controller.output_filename(filename)
+        self.input_entry.insert(
+            0,
+            filename,
+        )
 
-        self.output_entry.delete(0, "end")
-        self.output_entry.insert(0, output)
+        output = self.controller.output_filename(
+            filename
+        )
 
-    # ==================================================
+        self.output_entry.delete(
+            0,
+            "end",
+        )
+
+        self.output_entry.insert(
+            0,
+            output,
+        )
+
+            # ==========================================================
+    # Feldolgozás indítása
+    # ==========================================================
 
     def start_process(self):
 
-        self.update_progress(0)
+        self.progress.set(0)
+
         self.log_box.configure(state="normal")
         self.log_box.delete("1.0", "end")
         self.log_box.configure(state="disabled")
 
-        filename = self.input_entry.get()
-        output = self.output_entry.get()
+        filename = self.input_entry.get().strip()
+        output = self.output_entry.get().strip()
 
         if not filename:
-            self.log("Nincs kiválasztott fájl.")
+            self.log("❌ Nincs kiválasztott fájl.")
             return
 
-        self.log("Rendezés elindult...")
+        self.button.configure(state="disabled")
+
+        self.log("🚀 Feldolgozás elindult...")
+
+        self.process, self.queue = self.controller.start_process(
+            filename,
+            output,
+        )
+
+        self.after(
+            self.POLL_INTERVAL,
+            self.check_queue,
+        )
+
+        # ==========================================================
+    # Queue figyelése
+    # ==========================================================
+
+    def check_queue(self):
 
         try:
 
-            self.controller.process_document(
-                filename,
-                output,
-                logger=self.log,
-                progress=self.update_progress
-            )
+            while True:
 
-            self.log("✅ Kész!")
+                msg_type, data = self.queue.get_nowait()
 
-            print("=" * 40)
-            print("KÉSZ!")
-            print(output)
+                if msg_type == "log":
 
-            
+                    self.log(data)
 
-        except Exception:
+                elif msg_type == "progress":
 
-            import traceback
+                    self.update_progress(data)
 
-            self.log("❌ Hiba történt!")
+                elif msg_type == "done":
 
-            traceback.print_exc()
+                    self.update_progress(100)
+
+                    self.log("✅ Kész!")
+
+                    self.button.configure(state="normal")
+
+                    self.process = None
+                    self.queue = None
+
+                    return
+
+                elif msg_type == "error":
+
+                    self.log("❌ Hiba történt!")
+                    self.log(data)
+
+                    self.button.configure(state="normal")
+
+                    self.process = None
+                    self.queue = None
+
+                    return
+
+        except Empty:
+
+            pass
+
+        except Exception as e:
+
+            self.log(f"❌ Váratlan hiba: {e}")
+
+        if self.process is not None:
+
+            if self.process.is_alive():
+
+                self.after(
+                    self.POLL_INTERVAL,
+                    self.check_queue,
+                )
+
+            else:
+
+                self.button.configure(state="normal")
+
+                self.process = None
+                self.queue = None
+
+    # ==========================================================
+    # Ablak bezárása
+    # ==========================================================
+
+    def on_close(self):
+
+        if self.process is not None and self.process.is_alive():
+
+            self.log("⚠️ A feldolgozás még folyamatban van.")
+            return
+
+        self.destroy()

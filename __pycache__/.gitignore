@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtuális környezet
+venv/
+.venv/
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Word ideiglenes fájlok
+~$*.docx
+
+# Python cache
+.pytest_cache/
+
+# Build
+build/
+dist/
+
+# PyInstaller
+*.spec
